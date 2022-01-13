@@ -5,6 +5,7 @@ namespace catchAdmin\jwt\parser;
 
 use catchAdmin\jwt\contract\Parser as ParserContract;
 use think\Request;
+use think\facade\Cookie as ThinkCookie;
 
 class Cookie implements ParserContract
 {
@@ -12,6 +13,6 @@ class Cookie implements ParserContract
 
     public function parse(Request $request)
     {
-        return \think\facade\Cookie::get($this->key);
+        return ThinkCookie::get($this->key);
     }
 }

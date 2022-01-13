@@ -7,7 +7,7 @@ use think\Request;
 
 class Factory
 {
-    protected $classMap
+    protected array $classMap
         = [
             'aud' => Audience::class,
             'exp' => Expiration::class,
@@ -18,18 +18,22 @@ class Factory
             'sub' => Subject::class,
         ];
 
-    protected $ttl;
-    protected $claim = [];
-    protected $refreshTtl;
+    protected int $ttl;
 
-    public function __construct(Request $request, $ttl, $refreshTtl)
+    protected array $claim = [];
+
+    protected int $refreshTtl;
+
+    private Request $request;
+
+    public function __construct(Request $request, int $ttl, int $refreshTtl)
     {
         $this->request    = $request;
         $this->ttl        = $ttl;
         $this->refreshTtl = $refreshTtl;
     }
 
-    public function customer($key, $value)
+    public function customer(string $key, string $value): static
     {
         $this->claim[$key] = isset($this->classMap[$key])
             ? new $this->classMap[$key]($value)
@@ -38,12 +42,15 @@ class Factory
         return $this;
     }
 
-    public function builder()
+    public function builder(): static
     {
+        $claim = [];
+
         foreach ($this->classMap as $key => $class) {
             $claim[$key] = new $class(method_exists($this, $key)
                 ? $this->$key() : '');
         }
+
         $this->claim = array_merge($this->claim, $claim);
 
         return $this;
@@ -51,7 +58,7 @@ class Factory
 
     public function validate($refresh = false)
     {
-        foreach ($this->claim as $key => $claim) {
+        foreach ($this->claim as $claim) {
             if (! $refresh && method_exists($claim, 'validatePayload')) {
                 $claim->validatePayload();
             }
@@ -61,37 +68,37 @@ class Factory
         }
     }
 
-    public function getClaims()
+    public function getClaims(): array
     {
         return $this->claim;
     }
 
-    public function aud()
+    public function aud(): string
     {
         return $this->request->url();
     }
 
-    public function exp()
+    public function exp(): int
     {
         return time() + $this->ttl;
     }
 
-    public function iat()
+    public function iat(): int
     {
         return time();
     }
 
-    public function iss()
+    public function iss(): string
     {
         return $this->request->url();
     }
 
-    public function jti()
+    public function jti(): string
     {
         return md5(uniqid().time().rand(100000, 9999999));
     }
 
-    public function nbf()
+    public function nbf(): int
     {
         return time();
     }

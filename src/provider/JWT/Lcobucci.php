@@ -13,6 +13,7 @@ use Lcobucci\JWT\Signer\Ecdsa\Sha512 as ES512;
 use Lcobucci\JWT\Signer\Hmac\Sha256 as HS256;
 use Lcobucci\JWT\Signer\Hmac\Sha384 as HS384;
 use Lcobucci\JWT\Signer\Hmac\Sha512 as HS512;
+use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Keychain;
 use Lcobucci\JWT\Signer\Rsa;
 use Lcobucci\JWT\Signer\Rsa\Sha256 as RS256;
@@ -24,7 +25,7 @@ use catchAdmin\jwt\exception\TokenInvalidException;
 
 class Lcobucci extends Provider
 {
-    protected $signers
+    protected array $signers
         = [
             'HS256' => HS256::class,
             'HS384' => HS384::class,
@@ -36,15 +37,21 @@ class Lcobucci extends Provider
             'ES384' => ES384::class,
             'ES512' => ES512::class,
         ];
-    protected $builder;
-    protected $parser;
+
+    protected Builder $builder;
+
+    protected Parser $parser;
 
     public function __construct(Builder $builder, Parser $parser, $algo, $keys)
     {
         $this->builder = $builder;
+
         $this->parser  = $parser;
+
         $this->algo    = $algo;
+
         $this->keys    = $keys;
+
         $this->signer  = $this->getSign();
     }
 
@@ -52,6 +59,7 @@ class Lcobucci extends Provider
     public function encode(array $payload)
     {
         $this->builder->unsign();
+
         try {
             foreach ($payload as $key => $val) {
                 $this->builder->set($key, $val->getValue());
@@ -84,7 +92,7 @@ class Lcobucci extends Provider
     }
 
 
-    protected function isAsymmetric()
+    protected function isAsymmetric(): bool
     {
         $reflect = new ReflectionClass($this->signer);
 
@@ -92,7 +100,7 @@ class Lcobucci extends Provider
             || $reflect->isSubclassOf(Ecdsa::class);
     }
 
-    protected function getSigningKey()
+    protected function getSigningKey(): Key
     {
         return $this->isAsymmetric()
             ?
@@ -104,7 +112,7 @@ class Lcobucci extends Provider
             $this->getSecret();
     }
 
-    protected function getVerificationKey()
+    protected function getVerificationKey(): Key
     {
         return $this->isAsymmetric()
             ?

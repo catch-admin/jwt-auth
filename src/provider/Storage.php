@@ -1,15 +1,12 @@
 <?php
 
+namespace catchAdmin\jwt\provider;
 
-namespace catchAdmin\jwt\provider\storage;
-
-
-use catchAdmin\jwt\contract\Storage;
 use think\facade\Cache;
 
-class Tp6 implements Storage
+class Storage
 {
-    public function delete($key)
+    public function delete($key): bool
     {
         return Cache::delete($key);
     }
@@ -19,7 +16,7 @@ class Tp6 implements Storage
         return Cache::get($key);
     }
 
-    public function set($key, $val, $time = 0)
+    public function set($key, $val, int $time = 0): bool
     {
         return Cache::set($key, $val, $time);
     }

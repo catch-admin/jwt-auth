@@ -7,7 +7,7 @@ use catchAdmin\jwt\exception\TokenExpiredException;
 
 class Expiration extends Claim
 {
-    protected $name = 'exp';
+    protected string $name = 'exp';
 
     public function validatePayload()
     {

@@ -2,44 +2,44 @@
 
 namespace catchAdmin\jwt;
 
-use catchAdmin\jwt\contract\Storage;
+use catchAdmin\jwt\provider\Storage;
 
 class Blacklist
 {
-    protected $storage;
-    protected $refreshTTL = 20160;
-    protected $gracePeriod = 0;
+    protected Storage $storage;
+    protected int $refreshTTL = 20160;
+    protected int $gracePeriod = 0;
 
     public function __construct(Storage $storage)
     {
         $this->storage = $storage;
     }
 
-    public function add($payload)
+    public function add($payload): static
     {
         $this->set($this->getKey($payload), $this->getGraceTimestamp(), $this->getSecondsUntilExpired($payload));
 
         return $this;
     }
 
-    public function has($payload)
+    public function has($payload): bool
     {
-        return $this->get($this->getKey($payload)) ? true : false;
+        return (bool) $this->get($this->getKey($payload));
     }
 
-    public function hasGracePeriod($payload)
+    public function hasGracePeriod($payload): bool
     {
         $val = (int) $this->get($this->getKey($payload));
 
         return  $val && $val >= time();
     }
 
-    protected function getKey($payload)
+    protected function getKey(array $payload)
     {
         return $payload['jti']->getValue();
     }
 
-    public function set($key, $val, $time = 0)
+    public function set($key, $val, $time = 0): static
     {
         $this->storage->set($key, $val, $time);
 
@@ -51,42 +51,43 @@ class Blacklist
         return $this->storage->get($key);
     }
 
-    public function remove($key)
+    public function remove($key): bool
     {
         return $this->storage->delete($key);
     }
 
-    public function getRefreshTTL()
+    public function getRefreshTTL(): int
     {
         return $this->refreshTTL;
     }
 
-    public function setRefreshTTL($ttl)
+    public function setRefreshTTL(int $ttl): static
     {
-        $this->refreshTTL = (int) $ttl;
+        $this->refreshTTL = $ttl;
 
         return $this;
     }
 
-    public function getGracePeriod()
+    public function getGracePeriod(): int
     {
         return $this->gracePeriod;
     }
 
-    public function setGracePeriod($gracePeriod)
+    public function setGracePeriod(int $gracePeriod): static
     {
-        $this->gracePeriod = (int) $gracePeriod;
+        $this->gracePeriod = $gracePeriod;
 
         return $this;
     }
 
-    protected function getSecondsUntilExpired($payload)
+    protected function getSecondsUntilExpired(array $payload)
     {
         $iat = $payload['iat']->getValue();
+
         return $iat + $this->getRefreshTTL() * 60 - time();
     }
 
-    protected function getGraceTimestamp()
+    protected function getGraceTimestamp(): int
     {
         return time() + $this->gracePeriod;
     }

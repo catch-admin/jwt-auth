@@ -7,7 +7,7 @@ use catchAdmin\jwt\exception\JWTException;
 
 class Provider
 {
-    protected $signers;
+    protected array $signers;
 
     protected $algo;
 

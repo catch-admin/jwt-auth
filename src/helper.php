@@ -1,13 +1,13 @@
 <?php
 
-use catchAdmin\jwt\command\SecretCommand;
+use catchAdmin\jwt\command\JwtCommand;
 use catchAdmin\jwt\provider\JWT as JWTProvider;
 use think\Console;
 use think\App;
 
-if (strpos(App::VERSION, '6.0') === false) {
+if (!str_contains(App::VERSION, '6.0')) {
     Console::addDefaultCommands([
-        SecretCommand::class
+        JwtCommand::class
     ]);
     (new JWTProvider(app('request')))->init();
 }

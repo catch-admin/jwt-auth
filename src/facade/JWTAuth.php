@@ -19,7 +19,7 @@ use think\Facade;
  */
 class JWTAuth extends Facade
 {
-    protected static function getFacadeClass()
+    protected static function getFacadeClass(): string
     {
         return 'catchAdmin\jwt\JWTAuth';
     }

@@ -4,6 +4,7 @@
 namespace catchAdmin\jwt\parser;
 
 use catchAdmin\jwt\contract\Parser as ParserContract;
+use catchAdmin\jwt\exception\TokenMissingException;
 use think\Request;
 
 class AuthHeader implements ParserContract
@@ -12,15 +13,19 @@ class AuthHeader implements ParserContract
 
     protected string $prefix = 'bearer';
 
+    /**
+     * @throws TokenMissingException
+     */
     public function parse(Request $request)
     {
         $header = $request->header($this->header);
 
-        if ($header
-            && preg_match('/'.$this->prefix.'\s*(\S+)\b/i', $header, $matches)
+        if ($header && preg_match('/'.$this->prefix.'\s*(\S+)\b/i', $header, $matches)
         ) {
             return $matches[1];
         }
+
+        throw new TokenMissingException();
     }
 
     public function setHeaderName(string $name): static

@@ -8,13 +8,13 @@ use catchAdmin\jwt\provider\JWT\Provider;
 
 class Manager
 {
-    protected $blacklist;
+    protected Blacklist $blacklist;
 
-    protected $payload;
+    protected Payload $payload;
 
     protected $refresh;
 
-    protected $validate = true;
+    protected bool $validate = true;
 
     public function __construct(
         Blacklist $blacklist,
@@ -29,13 +29,14 @@ class Manager
     /**
      * Token编码
      *
-     * @param $customerClaim
+     * @param array $customerClaim
      *
      * @return Token
      */
-    public function encode($customerClaim = [])
+    public function encode(array $customerClaim = [])
     {
         $payload = $this->payload->customer($customerClaim);
+
         $token   = $this->provider->encode($payload->get());
 
         return new Token($token);
@@ -47,12 +48,11 @@ class Manager
      * @param  Token  $token
      *
      * @return mixed
-     * @throws TokenBlacklistException
+     * @throws TokenBlacklistException|TokenBlacklistGracePeriodException
      */
-    public function decode(Token $token)
+    public function decode(Token $token): mixed
     {
         $payload = $this->provider->decode($token->get());
-
 
         if ($this->validate) {
             //blacklist grace period verify
@@ -77,11 +77,12 @@ class Manager
      * @param  Token  $token
      *
      * @return Token
-     * @throws TokenBlacklistException
+     * @throws TokenBlacklistException|TokenBlacklistGracePeriodException
      */
-    public function refresh(Token $token)
+    public function refresh(Token $token): Token
     {
         $this->setRefresh();
+
         $payload = $this->decode($token);
 
         $this->invalidate($token);
@@ -98,9 +99,8 @@ class Manager
      * @param  Token  $token
      *
      * @return Blacklist
-     * @throws TokenBlacklistException
      */
-    public function invalidate(Token $token)
+    public function invalidate(Token $token): Blacklist
     {
         return $this->blacklist->add($this->provider->decode($token->get()));
     }
@@ -112,26 +112,27 @@ class Manager
      *
      * @return bool
      */
-    public function validate($payload)
+    public function validate($payload): bool
     {
         return $this->blacklist->has($payload);
     }
 
-    public function validateGracePeriod($payload)
+    public function validateGracePeriod($payload): bool
     {
         return $this->blacklist->hasGracePeriod($payload);
     }
 
-    public function setRefresh($refresh = true)
+    public function setRefresh(): static
     {
         $this->refresh = true;
 
         return $this;
     }
 
-    public function setValidate($validate = true)
+    public function setValidate(bool $validate = true): static
     {
         $this->validate = $validate;
+
         $this->refresh = !$validate ? true : $this->refresh;
 
         return $this;

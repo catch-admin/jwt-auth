@@ -8,11 +8,13 @@ use catchAdmin\jwt\exception\JWTException;
 
 class JWT
 {
-    protected $manager;
-    protected $parser;
-    protected $token;
+    protected Manager $manager;
 
-    public function parser()
+    protected Parser $parser;
+
+    protected mixed $token;
+
+    public function parser(): Parser
     {
         return $this->parser;
     }
@@ -20,25 +22,33 @@ class JWT
     public function __construct(Manager $manager, Parser $parser)
     {
         $this->manager = $manager;
+
         $this->parser  = $parser;
     }
 
-    public function createToken($customerClaim = [])
+    public function createToken($customerClaim = []): string
     {
         return $this->manager->encode($customerClaim)->get();
     }
 
-    public function parseToken()
+    /**
+     * @time 2022年01月13日
+     * @return $this
+     * @throws JWTException
+     * @throws exception\TokenParseFailedException
+     */
+    public function parseToken(): static
     {
         if (! $token = $this->parser->parseToken()) {
             throw new JWTException('No token is this request.');
         }
+
         $this->setToken($token);
 
         return $this;
     }
 
-    public function getToken()
+    public function getToken(): ?string
     {
         if ($this->token === null) {
             try {
@@ -51,13 +61,16 @@ class JWT
         return $this->token;
     }
 
-    public function setToken($token)
+    public function setToken($token): static
     {
         $this->token = $token instanceof Token ? $token : new Token($token);
 
         return $this;
     }
 
+    /**
+     * @throws JWTException
+     */
     public function requireToken()
     {
         $this->getToken();
@@ -73,7 +86,7 @@ class JWT
      * @throws JWTException
      * @throws exception\TokenBlacklistException
      */
-    public function getPayload()
+    public function getPayload(): mixed
     {
         $this->requireToken();
 
@@ -82,10 +95,10 @@ class JWT
 
     /**
      * 刷新Token
-     * @return mixed
+     *
      * @throws JWTException
      */
-    public function refresh()
+    public function refresh(): string
     {
         $this->parseToken();
 
@@ -93,7 +106,9 @@ class JWT
     }
 
 
-
+    /**
+     * @throws BadMethodCallException
+     */
     public function __call($method, $parameters)
     {
         if (method_exists($this->manager, $method)) {

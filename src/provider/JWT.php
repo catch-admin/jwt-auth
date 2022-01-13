@@ -1,57 +1,59 @@
 <?php
 
-
 namespace catchAdmin\jwt\provider;
 
+use catchAdmin\jwt\Blacklist;
+use catchAdmin\jwt\claim\Factory;
 use catchAdmin\jwt\facade\JWTAuth;
+use catchAdmin\jwt\Manager;
 use catchAdmin\jwt\parser\AuthHeader;
 use catchAdmin\jwt\parser\Cookie;
 use catchAdmin\jwt\parser\Param;
-use think\App;
-use think\Container;
-use think\facade\Config;
+use catchAdmin\jwt\Payload;
+use catchAdmin\jwt\provider\JWT\Lcobucci;
 use think\Request;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
+use think\facade\App;
 
 class JWT
 {
-    private $request;
+    private mixed $request;
 
-    private $config;
+    private array $config;
 
-    public function __construct(Request $request)
+    public function register(): void
     {
-        $this->request = $request;
-        $config        = require __DIR__.'/../../config/config.php';
-        if (strpos(App::VERSION, '6.0') !== false) {
-            $this->config = array_merge($config, Config::get('jwt') ?? []);
-        } else {
-            $this->config = array_merge($config, Config::get('jwt.') ?? []);
+        $this->config = config('jwt');
+
+        $this->request = App::make(Request::class);
+
+        if (! empty($this->config)) {
+            $this->init();
         }
     }
 
     protected function registerBlacklist()
     {
-        Container::getInstance()->make('catchAdmin\jwt\Blacklist', [
-            new $this->config['blacklist_storage'],
-        ])->setRefreshTTL($this->config['refresh_ttl'])->setGracePeriod($this->config['blacklist_grace_period']);
+        App::make(Blacklist::class, [
+            new Storage()
+        ])->setRefreshTTL($this->config['refresh_ttl'])
+        ->setGracePeriod($this->config['blacklist_grace_period']);
     }
-
 
     protected function registerProvider()
     {
         //builder asymmetric keys
-        $keys = $this->config['secret']
-            ? $this->config['secret']
-            : [
+        $keys = $this->config['secret'] ??
+            [
                 'public'   => $this->config['public_key'],
                 'private'  => $this->config['private_key'],
                 'password' => $this->config['password'],
             ];
-        Container::getInstance()->make('catchAdmin\jwt\provider\JWT\Lcobucci', [
-            new Builder(),
-            new Parser(),
+
+        App::make(Lcobucci::class, [
+            App::make(Builder::class),
+            App::make(Parser::class),
             $this->config['algo'],
             $keys,
         ]);
@@ -59,7 +61,7 @@ class JWT
 
     protected function registerFactory()
     {
-        Container::getInstance()->make('catchAdmin\jwt\claim\Factory', [
+        App::make(Factory::class, [
             new Request(),
             $this->config['ttl'],
             $this->config['refresh_ttl'],
@@ -68,17 +70,19 @@ class JWT
 
     protected function registerPayload()
     {
-        Container::getInstance()->make('catchAdmin\jwt\Payload', [
-            Container::getInstance()->make('catchAdmin\jwt\claim\Factory'),
+        App::make(Payload::class, [
+            App::make(Factory::class)
         ]);
     }
 
     protected function registerManager()
     {
-        Container::getInstance()->make('catchAdmin\jwt\Manager', [
-            Container::getInstance()->make('catchAdmin\jwt\Blacklist'),
-            Container::getInstance()->make('catchAdmin\jwt\Payload'),
-            Container::getInstance()->make('catchAdmin\jwt\provider\JWT\Lcobucci'),
+        App::make(Manager::class, [
+            App::make(Blacklist::class),
+
+            App::make(Payload::class),
+
+            App::make(Lcobucci::class)
         ]);
     }
 
@@ -91,6 +95,7 @@ class JWT
         ];
 
         $mode = $this->config['token_mode'];
+
         $setChain = [];
 
         foreach ($mode as $key => $chain) {
@@ -105,10 +110,15 @@ class JWT
     public function init()
     {
         $this->registerBlacklist();
+
         $this->registerProvider();
+
         $this->registerFactory();
+
         $this->registerPayload();
+
         $this->registerManager();
+
         $this->registerJWTAuth();
     }
 }

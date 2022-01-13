@@ -14,9 +14,9 @@ use catchAdmin\jwt\claim\Subject;
 
 class Payload
 {
-    protected $factory;
+    protected Factory $factory;
 
-    protected $classMap
+    protected array $classMap
         = [
             'aud' => Audience::class,
             'exp' => Expiration::class,
@@ -27,14 +27,14 @@ class Payload
             'sub' => Subject::class,
         ];
 
-    protected $claims;
+    protected array $claims;
 
     public function __construct(Factory $factory)
     {
         $this->factory = $factory;
     }
 
-    public function customer(array $claim = [])
+    public function customer(array $claim = []): static
     {
         foreach ($claim as $key => $value) {
             $this->factory->customer(
@@ -46,14 +46,13 @@ class Payload
         return $this;
     }
 
-    public function get()
+    public function get(): array
     {
-        $claim = $this->factory->builder()->getClaims();
-
-        return $claim;
+        return $this->factory->builder()->getClaims();
     }
 
-    public function check($refresh = false)
+
+    public function check(bool $refresh = false): static
     {
         $this->factory->validate($refresh);
 

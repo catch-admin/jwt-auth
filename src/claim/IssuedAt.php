@@ -7,8 +7,11 @@ use catchAdmin\jwt\exception\TokenExpiredException;
 
 class IssuedAt extends Claim
 {
-    protected $name = 'iat';
+    protected string $name = 'iat';
 
+    /**
+     * @throws TokenExpiredException
+     */
     public function validatePayload()
     {
         if (time() < (int)$this->getValue()) {
@@ -16,6 +19,9 @@ class IssuedAt extends Claim
         }
     }
 
+    /**
+     * @throws TokenExpiredException
+     */
     public function validateRefresh($refreshTtl)
     {
         if (time() >= (int)$this->getValue() + $refreshTtl * 60) {

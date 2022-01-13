@@ -5,5 +5,5 @@ namespace catchAdmin\jwt\claim;
 
 class NotBefore extends Claim
 {
-    protected $name = 'nbf';
+    protected string $name = 'nbf';
 }

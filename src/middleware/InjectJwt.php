@@ -10,10 +10,8 @@ class InjectJwt
 {
     public function handle(Request $request, $next)
     {
-        (new JWTProvider($request))->init();
+        (new JWTProvider)->init();
 
-        $response = $next($request);
-
-        return $response;
+        return $next($request);
     }
 }

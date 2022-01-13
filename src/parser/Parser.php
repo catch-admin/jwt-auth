@@ -3,21 +3,23 @@
 
 namespace catchAdmin\jwt\parser;
 
+use catchAdmin\jwt\exception\TokenParseFailedException;
 use think\Request;
 
 class Parser
 {
-    protected $request;
+    protected Request $request;
 
-    private $chain;
+    private array $chain;
 
     public function __construct(Request $request, $chain = [])
     {
         $this->request = $request;
+
         $this->chain   = $chain;
     }
 
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): static
     {
         $this->request = $request;
 
@@ -36,6 +38,9 @@ class Parser
         return $this->chain;
     }
 
+    /**
+     * @throws TokenParseFailedException
+     */
     public function parseToken()
     {
         foreach ($this->chain as $parser) {
@@ -43,8 +48,15 @@ class Parser
                 return $response;
             }
         }
+
+        throw new TokenParseFailedException();
     }
 
+    /**
+     * @time 2022年01月13日
+     * @return bool
+     * @throws TokenParseFailedException
+     */
     public function hasToken(): bool
     {
         return $this->parseToken() !== null;

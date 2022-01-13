@@ -5,5 +5,5 @@ namespace catchAdmin\jwt\claim;
 
 class Issuer extends Claim
 {
-    protected $name = 'iss';
+    protected string $name = 'iss';
 }

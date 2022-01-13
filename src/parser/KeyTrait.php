@@ -5,7 +5,7 @@ namespace catchAdmin\jwt\parser;
 
 trait KeyTrait
 {
-    private $key = 'token';
+    private string $key = 'token';
 
     public function setKey(string $key): static
     {
