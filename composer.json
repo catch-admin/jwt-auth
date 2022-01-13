@@ -1,0 +1,36 @@
+{
+    "name": "catchadmin/jwt-auth",
+    "description": "catch-admin  jwt auth",
+    "type": "library",
+    "require": {
+        "php": "^8.0",
+        "lcobucci/jwt": "4.1.5",
+        "topthink/framework": "6.0.10"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "JaguarJack",
+            "email": "njphper@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "catchAdmin\\jwt\\": "src"
+        },
+        "files": [
+            "src/helper.php"
+        ]
+    },
+    "extra": {
+        "think": {
+            "services": [
+                "thans\\jwt\\Service"
+            ],
+            "config": {
+                "jwt": "config/config.php"
+            }
+        }
+    },
+    "minimum-stability": "dev"
+}
