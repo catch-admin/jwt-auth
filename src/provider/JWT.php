@@ -11,9 +11,14 @@ use catchAdmin\jwt\parser\Cookie;
 use catchAdmin\jwt\parser\Param;
 use catchAdmin\jwt\Payload;
 use catchAdmin\jwt\provider\JWT\Lcobucci;
+use catchAdmin\system\model\Config;
+use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Encoding\ChainedFormatter;
+use Lcobucci\JWT\Encoding\JoseEncoder;
+use Lcobucci\JWT\Encoding\MicrosecondBasedDateConversion;
+use Lcobucci\JWT\Token\Builder;
+use Lcobucci\JWT\Token\Parser;
 use think\Request;
-use Lcobucci\JWT\Builder;
-use Lcobucci\JWT\Parser;
 use think\facade\App;
 
 class JWT
@@ -46,14 +51,13 @@ class JWT
         //builder asymmetric keys
         $keys = $this->config['secret'] ??
             [
-                'public'   => $this->config['public_key'],
-                'private'  => $this->config['private_key'],
+                'public' => $this->config['public_key'],
+                'private' => $this->config['private_key'],
                 'password' => $this->config['password'],
             ];
 
+
         App::make(Lcobucci::class, [
-            App::make(Builder::class),
-            App::make(Parser::class),
             $this->config['algo'],
             $keys,
         ]);

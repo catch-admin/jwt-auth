@@ -2,12 +2,10 @@
 
 namespace catchAdmin\jwt;
 
-use catchAdmin\jwt\parser\Parser;
-
 class JWTAuth extends JWT
 {
     /**
-     * Token验证，返回payload
+     * Token 验证，返回 payload
      *
      * @param boolean $validate 是否验证黑名单
      * @return array
@@ -19,7 +17,7 @@ class JWTAuth extends JWT
     {
         $this->manager->setValidate($validate);
 
-        return (array)$this->getPayload();
+        return $this->getPayload();
     }
 
     /**
@@ -39,7 +37,7 @@ class JWTAuth extends JWT
      *
      * @return mixed
      */
-    public function token()
+    public function token(): mixed
     {
         return $this->getToken();
     }
@@ -70,9 +68,9 @@ class JWTAuth extends JWT
     public function validate($token): bool
     {
         if ($token instanceof Token) {
-            return $this->manager->validate($this->manager->provider->decode($token->get()));
+            return $this->manager->validate($this->manager->getProvider()->decode($token->get()));
         }
 
-        return $this->manager->validate($this->manager->provider->decode($token));
+        return $this->manager->validate($this->manager->getProvider()->decode($token));
     }
 }

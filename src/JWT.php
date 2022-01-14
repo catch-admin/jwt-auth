@@ -6,19 +6,30 @@ use catchAdmin\jwt\exception\BadMethodCallException;
 use catchAdmin\jwt\parser\Parser;
 use catchAdmin\jwt\exception\JWTException;
 
+/**
+ * JWT
+ */
 class JWT
 {
+    /**
+     * @var Manager
+     */
     protected Manager $manager;
 
+    /**
+     * @var Parser
+     */
     protected Parser $parser;
 
-    protected mixed $token;
+    /**
+     * @var mixed
+     */
+    protected mixed $token = null;
 
-    public function parser(): Parser
-    {
-        return $this->parser;
-    }
-
+    /**
+     * @param Manager $manager
+     * @param Parser $parser
+     */
     public function __construct(Manager $manager, Parser $parser)
     {
         $this->manager = $manager;
@@ -26,7 +37,23 @@ class JWT
         $this->parser  = $parser;
     }
 
-    public function createToken($customerClaim = []): string
+    /**
+     * @desc parser
+     * @time 2022年01月14日
+     * @return Parser
+     */
+    public function parser(): Parser
+    {
+        return $this->parser;
+    }
+
+    /**
+     * @desc create token
+     * @time 2022年01月14日
+     * @param array $customerClaim
+     * @return string
+     */
+    public function createToken(array $customerClaim = []): string
     {
         return $this->manager->encode($customerClaim)->get();
     }
@@ -48,6 +75,12 @@ class JWT
         return $this;
     }
 
+    /**
+     * @desc get token
+     *
+     * @time 2022年01月14日
+     * @return string|null
+     */
     public function getToken(): ?string
     {
         if ($this->token === null) {
@@ -61,6 +94,13 @@ class JWT
         return $this->token;
     }
 
+    /**
+     * @desc set token
+     *
+     * @time 2022年01月14日
+     * @param $token
+     * @return $this
+     */
     public function setToken($token): static
     {
         $this->token = $token instanceof Token ? $token : new Token($token);

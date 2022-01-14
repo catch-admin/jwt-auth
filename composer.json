@@ -1,6 +1,6 @@
 {
     "name": "catchadmin/jwt-auth",
-    "description": "catch-admin  jwt auth",
+    "description": "catch-admin jwt auth，you can use in thinkphp6.0.*",
     "type": "library",
     "require": {
         "php": ">=8.0",

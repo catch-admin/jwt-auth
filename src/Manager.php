@@ -12,9 +12,11 @@ class Manager
 
     protected Payload $payload;
 
-    protected $refresh;
+    protected ?bool $refresh = true;
 
     protected bool $validate = true;
+
+    private Provider $provider;
 
     public function __construct(
         Blacklist $blacklist,
@@ -33,7 +35,7 @@ class Manager
      *
      * @return Token
      */
-    public function encode(array $customerClaim = [])
+    public function encode(array $customerClaim = []): Token
     {
         $payload = $this->payload->customer($customerClaim);
 
@@ -66,7 +68,9 @@ class Manager
             }
         }
 
-        $this->payload->customer($payload)->check($this->refresh);
+        $this->payload
+            ->customer($payload)
+            ->check($this->refresh);
 
         return $payload;
     }
@@ -136,5 +140,10 @@ class Manager
         $this->refresh = !$validate ? true : $this->refresh;
 
         return $this;
+    }
+
+    public function getProvider(): Provider
+    {
+        return $this->provider;
     }
 }

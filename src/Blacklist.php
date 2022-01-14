@@ -15,7 +15,7 @@ class Blacklist
         $this->storage = $storage;
     }
 
-    public function add($payload): static
+    public function add($payload)
     {
         $this->set($this->getKey($payload), $this->getGraceTimestamp(), $this->getSecondsUntilExpired($payload));
 

@@ -1,17 +1,14 @@
 <?php
 
-
 namespace catchAdmin\jwt\provider\JWT;
-
-use catchAdmin\jwt\exception\JWTException;
 
 class Provider
 {
     protected array $signers;
 
-    protected $algo;
+    protected string $algo;
 
-    protected $keys;
+    protected mixed $keys;
 
     public function getPublicKey()
     {
@@ -19,27 +16,35 @@ class Provider
             return $this->keys['public'];
         }
 
-        return '-----BEGIN PUBLIC KEY-----'.PHP_EOL.implode(PHP_EOL, str_split($this->keys['public'], 64)).PHP_EOL
-            .'-----END PUBLIC KEY-----';
+        return '-----BEGIN PUBLIC KEY-----' . PHP_EOL
+
+            . implode(PHP_EOL, str_split($this->keys['public'], 64)) . PHP_EOL
+
+            . '-----END PUBLIC KEY-----';
     }
 
     public function getPrivateKey()
     {
         $header = '-----BEGIN PRIVATE KEY-----';
         $footer = '-----END PRIVATE KEY-----';
+
         if (is_file($this->keys['private'])) {
             return $this->keys['private'];
         }
+
         if ($this->keys['password'] != '') {
             $header = '-----BEGIN ENCRYPTED PRIVATE KEY-----';
             $footer = '-----END ENCRYPTED PRIVATE KEY-----';
         }
 
-        return $header.PHP_EOL.implode(PHP_EOL, str_split($this->keys['private'], 64)).PHP_EOL
+        return $header . PHP_EOL
+
+            . implode(PHP_EOL, str_split($this->keys['private'], 64)).PHP_EOL
+
             .$footer;
     }
 
-    public function getSecret()
+    public function getSecret(): string
     {
         return $this->keys;
     }

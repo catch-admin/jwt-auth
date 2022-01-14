@@ -1,6 +1,6 @@
 
 ## 说明
-fork from https://gitee.com/thans/jwt-auth
+fork from https://gitee.com/thans/jwt-auth, 只支持 8.0+
 
 <h1><p align="center">JWT-AUTH</p></h1>
 <p align="center"> thinkphp的jwt（JSON Web Token）身份验证包。支持Header、Cookie、Param等多种传参方式。包含：验证、验证并且自动刷新等多种中间件。</p>
@@ -9,7 +9,7 @@ fork from https://gitee.com/thans/jwt-auth
 
 ## 环境要求
 
-1. php ^7.0 || ^8.0
+1. php ^8.0
 2. thinkphp ^6.0.0
 
 ## 说明
@@ -46,7 +46,7 @@ fork from https://gitee.com/thans/jwt-auth
 第一步:
 
 ```shell
-$ composer require thans/tp-jwt-auth
+$ composer require catchadmin/jwt-auth
 ```
 
 第二步:
@@ -54,21 +54,21 @@ $ composer require thans/tp-jwt-auth
 ```shell
 $ php think jwt:create
 ```
-此举将生成jwt.php和.env配置文件。不推荐直接修改jwt.php
-同时，env中会随机生成secret。请不要随意更新secret，也请保障secret安全。
+此举将生成 `jwt.php`和 `.env` 配置文件。不推荐直接修改 `jwt.php`
+同时，`env`中会随机生成`secret`。请不要随意更新`secret`，也请保障`secret`安全。
 
 
 ## 使用方式
 
 对于需要验证的路由或者模块添加中间件：
 ```php
- thans\jwt\middleware\JWTAuth::class,
+ catchAdmin\jwt\middleware\JWTAuth::class,
 ```
 
 示例：
 
 ```php
-use thans\jwt\facade\JWTAuth;
+use catchAdmin\jwt\facade\JWTAuth;
 
 $token = JWTAuth::builder(['uid' => 1]);//参数为用户认证的信息，请自行添加
 

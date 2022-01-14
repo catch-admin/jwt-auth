@@ -2,7 +2,6 @@
 
 
 return [
-
     'secret'      => env('JWT_SECRET'),
 
     // Asymmetric key

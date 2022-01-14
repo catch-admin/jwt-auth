@@ -4,6 +4,7 @@
 namespace catchAdmin\jwt\claim;
 
 use catchAdmin\jwt\exception\TokenExpiredException;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class IssuedAt extends Claim
 {
@@ -14,7 +15,7 @@ class IssuedAt extends Claim
      */
     public function validatePayload()
     {
-        if (time() < (int)$this->getValue()) {
+        if (time() < $this->getValue()) {
             throw new TokenExpiredException('Issued At (iat) timestamp cannot be in the future.');
         }
     }
@@ -24,8 +25,13 @@ class IssuedAt extends Claim
      */
     public function validateRefresh($refreshTtl)
     {
-        if (time() >= (int)$this->getValue() + $refreshTtl * 60) {
+        if (time() >= $this->getValue() + $refreshTtl * 60) {
             throw new TokenExpiredException('Token has expired and can no longer be refreshed.');
         }
+    }
+
+    public function getValue(): mixed
+    {
+        return $this->value;
     }
 }

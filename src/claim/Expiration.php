@@ -9,10 +9,18 @@ class Expiration extends Claim
 {
     protected string $name = 'exp';
 
+    /**
+     * @throws TokenExpiredException
+     */
     public function validatePayload()
     {
-        if (time() >= (int)$this->getValue()) {
+        if (time() >= $this->getValue()->getTimeStamp()) {
             throw new TokenExpiredException('The token is expired.');
         }
+    }
+
+    public function getValue(): mixed
+    {
+        return $this->value;
     }
 }

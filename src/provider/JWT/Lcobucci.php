@@ -3,8 +3,10 @@
 
 namespace catchAdmin\jwt\provider\JWT;
 
+use catchAdmin\jwt\Payload;
 use Exception;
 use Lcobucci\JWT\Builder;
+use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Ecdsa;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256 as ES256;
@@ -14,17 +16,22 @@ use Lcobucci\JWT\Signer\Hmac\Sha256 as HS256;
 use Lcobucci\JWT\Signer\Hmac\Sha384 as HS384;
 use Lcobucci\JWT\Signer\Hmac\Sha512 as HS512;
 use Lcobucci\JWT\Signer\Key;
-use Lcobucci\JWT\Signer\Keychain;
 use Lcobucci\JWT\Signer\Rsa;
 use Lcobucci\JWT\Signer\Rsa\Sha256 as RS256;
 use Lcobucci\JWT\Signer\Rsa\Sha384 as RS384;
 use Lcobucci\JWT\Signer\Rsa\Sha512 as RS512;
+use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use ReflectionClass;
 use catchAdmin\jwt\exception\JWTException;
 use catchAdmin\jwt\exception\TokenInvalidException;
+use Lcobucci\JWT\Signer;
+use think\App;
 
 class Lcobucci extends Provider
 {
+    /**
+     * @var array|string[]
+     */
     protected array $signers
         = [
             'HS256' => HS256::class,
@@ -38,33 +45,69 @@ class Lcobucci extends Provider
             'ES512' => ES512::class,
         ];
 
-    protected Builder $builder;
+    /**
+     * @var ?Builder
+     */
+    protected ?Builder $builder;
 
-    protected Parser $parser;
+    /**
+     * @var ?Parser
+     */
+    protected ?Parser $parser;
 
-    public function __construct(Builder $builder, Parser $parser, $algo, $keys)
+    /**
+     * @var Signer
+     */
+    protected Signer $signer;
+
+    /**
+     * @var Configuration
+     */
+    protected Configuration $configuration;
+
+    /**
+     * @param $algo
+     * @param $keys
+     * @throws JWTException
+     * @throws \ReflectionException
+     */
+    public function __construct($algo, $keys)
     {
-        $this->builder = $builder;
+        $this->algo = $algo;
 
-        $this->parser  = $parser;
+        $this->keys = $keys;
 
-        $this->algo    = $algo;
+        $this->signer = $this->getSign();
 
-        $this->keys    = $keys;
+        $key = $this->getSigningKey();
 
-        $this->signer  = $this->getSign();
+        if (is_array($key)) {
+            $this->configuration = Configuration::forAsymmetricSigner($this->getSign(), Key\InMemory::plainText($key[0]), Key\InMemory::base64Encoded($key[1]));
+        } else {
+            $this->configuration = Configuration::forSymmetricSigner($this->getSign(), Key\InMemory::base64Encoded($key));
+        }
     }
 
 
-    public function encode(array $payload)
+    /**
+     * @throws JWTException
+     */
+    public function encode(array $payload): string
     {
-        $this->builder->unsign();
-
         try {
+            $builder = $this->configuration->builder();
+
             foreach ($payload as $key => $val) {
-                $this->builder->set($key, $val->getValue());
+                if (isset(Payload::CLAIMS_MAP[$key])) {
+                    $builder->{Payload::CLAIMS_MAP[$key]}($val->getValue(true));
+                } else {
+                    $builder->withClaim($key, $val->getValue());
+                }
             }
-            $this->builder->sign($this->signer, $this->getSigningKey());
+
+            $token = $builder->getToken($this->configuration->signer(), $this->configuration->signingKey());
+
+            return $token->toString();
         } catch (Exception $e) {
             throw new JWTException(
                 'Could not create token :'.$e->getMessage(),
@@ -72,26 +115,53 @@ class Lcobucci extends Provider
                 $e
             );
         }
-
-        return (string)$this->builder->getToken();
     }
 
-    public function decode($token)
+    /**
+     * @time 2022年01月13日
+     * @param string $token
+     * @return array
+     * @throws TokenInvalidException
+     */
+    public function decode(string $token): array
     {
         try {
-            $jwt = $this->parser->parse($token);
+            $token = $this->configuration->parser()->parse($token);
         } catch (Exception $e) {
-            throw new TokenInvalidException('Could not decode token: '
-                .$e->getMessage(), $e->getCode(), $e);
+            throw new TokenInvalidException('Could not decode token: ' . $e->getMessage(), $e->getCode(), $e);
         }
 
-        if (! $jwt->verify($this->signer, $this->getVerificationKey())) {
-            throw new TokenInvalidException('Token Signature could not be verified.');
+        try {
+            $singed = new SignedWith($this->configuration->signer(), $this->configuration->signingKey());
+
+            $singed->assert($token);
+        } catch (\Exception $e) {
+            throw new TokenInvalidException('Token Invalid');
         }
-        return $jwt->getClaims();
+
+        $claims = $token->claims()->all();
+
+        $payload = \app()->make(Payload::class);
+
+        foreach ($claims as $key => $val) {
+            if ($claim = $payload->matchClassMap($key)) {
+                if ($val instanceof \DateTimeImmutable) {
+                    $claims[$key] = new $claim($val->getTimestamp());
+                } else {
+                    $claims[$key] = new $claim($val);
+                }
+            }
+        }
+
+        return $claims;
     }
 
 
+    /**
+     * @time 2022年01月13日
+     * @return bool
+     * @throws \ReflectionException
+     */
     protected function isAsymmetric(): bool
     {
         $reflect = new ReflectionClass($this->signer);
@@ -100,28 +170,19 @@ class Lcobucci extends Provider
             || $reflect->isSubclassOf(Ecdsa::class);
     }
 
-    protected function getSigningKey(): Key
+    /**
+     * @time 2022年01月13日
+     * @return array|string
+     * @throws \ReflectionException
+     */
+    protected function getSigningKey(): array|string
     {
-        return $this->isAsymmetric()
-            ?
-            (new Keychain())->getPrivateKey(
-                $this->getPrivateKey(),
-                $this->getPassword()
-            )
-            :
-            $this->getSecret();
+        return $this->isAsymmetric() ? [$this->getPrivateKey(), $this->getPassword()] : $this->getSecret();
     }
 
-    protected function getVerificationKey(): Key
-    {
-        return $this->isAsymmetric()
-            ?
-            (new Keychain())->getPublicKey($this->getPublicKey())
-            :
-            $this->getSecret();
-    }
-
-
+    /**
+     * @throws JWTException
+     */
     protected function getSign()
     {
         if (! isset($this->signers[$this->algo])) {

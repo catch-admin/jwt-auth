@@ -27,6 +27,21 @@ class Payload
             'sub' => Subject::class,
         ];
 
+
+    /**
+     * value is \Lcobucci\JWT\TokenBuilder method
+     * @var array
+     */
+    public const CLAIMS_MAP = [
+        'aud' => 'permittedFor',
+        'exp' => 'expiresAt',
+        'iat' => 'issuedAt',
+        'iss' => 'issuedBy',
+        'jti' => 'identifiedBy',
+        'nbf' => 'canOnlyBeUsedAfter',
+        'sub' => 'relatedTo',
+    ];
+
     protected array $claims;
 
     public function __construct(Factory $factory)
@@ -39,7 +54,7 @@ class Payload
         foreach ($claim as $key => $value) {
             $this->factory->customer(
                 $key,
-                is_object($value) ? $value->getValue() : $value
+                is_object($value) ? $value->getValue(true) : $value
             );
         }
 
@@ -57,5 +72,26 @@ class Payload
         $this->factory->validate($refresh);
 
         return $this;
+    }
+
+    /**
+     * @desc match class map
+     *
+     * @time 2022年01月14日
+     * @param string $key
+     * @return string|null
+     */
+    public function matchClassMap(string $key): ?string
+    {
+        return match ($key) {
+            'aud' => Audience::class,
+            'exp' => Expiration::class,
+            'iat' => IssuedAt::class,
+            'iss' => Issuer::class,
+            'jti' => JwtId::class,
+            'nbf' => NotBefore::class,
+            'sub' => Subject::class,
+            default => null,
+        };
     }
 }
