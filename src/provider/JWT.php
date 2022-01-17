@@ -11,19 +11,12 @@ use catchAdmin\jwt\parser\Cookie;
 use catchAdmin\jwt\parser\Param;
 use catchAdmin\jwt\Payload;
 use catchAdmin\jwt\provider\JWT\Lcobucci;
-use catchAdmin\system\model\Config;
-use Lcobucci\JWT\Configuration;
-use Lcobucci\JWT\Encoding\ChainedFormatter;
-use Lcobucci\JWT\Encoding\JoseEncoder;
-use Lcobucci\JWT\Encoding\MicrosecondBasedDateConversion;
-use Lcobucci\JWT\Token\Builder;
-use Lcobucci\JWT\Token\Parser;
 use think\Request;
 use think\facade\App;
 
 class JWT
 {
-    private mixed $request;
+    private $request;
 
     private array $config;
 
@@ -34,10 +27,25 @@ class JWT
         $this->request = App::make(Request::class);
 
         if (! empty($this->config)) {
-            $this->init();
+            $this->registerBlacklist();
+
+            $this->registerProvider();
+
+            $this->registerFactory();
+
+            $this->registerPayload();
+
+            $this->registerManager();
+
+            $this->registerJWTAuth();
         }
     }
 
+    /**
+     * register blacklist
+     *
+     * @time 2022年01月17日
+     */
     protected function registerBlacklist()
     {
         App::make(Blacklist::class, [
@@ -46,6 +54,11 @@ class JWT
         ->setGracePeriod($this->config['blacklist_grace_period']);
     }
 
+    /**
+     * register provider
+     *
+     * @time 2022年01月17日
+     */
     protected function registerProvider()
     {
         //builder asymmetric keys
@@ -56,13 +69,17 @@ class JWT
                 'password' => $this->config['password'],
             ];
 
-
         App::make(Lcobucci::class, [
             $this->config['algo'],
             $keys,
         ]);
     }
 
+    /**
+     * register factory
+     *
+     * @time 2022年01月17日
+     */
     protected function registerFactory()
     {
         App::make(Factory::class, [
@@ -72,6 +89,11 @@ class JWT
         ]);
     }
 
+    /**
+     * register payload
+     *
+     * @time 2022年01月17日
+     */
     protected function registerPayload()
     {
         App::make(Payload::class, [
@@ -79,6 +101,11 @@ class JWT
         ]);
     }
 
+    /**
+     * register manager
+     *
+     * @time 2022年01月17日
+     */
     protected function registerManager()
     {
         App::make(Manager::class, [
@@ -90,6 +117,11 @@ class JWT
         ]);
     }
 
+    /**
+     * register jwt auth
+     *
+     * @time 2022年01月17日
+     */
     protected function registerJWTAuth()
     {
         $chains = [
@@ -109,20 +141,5 @@ class JWT
         }
 
         JWTAuth::parser()->setRequest($this->request)->setChain($setChain);
-    }
-
-    public function init()
-    {
-        $this->registerBlacklist();
-
-        $this->registerProvider();
-
-        $this->registerFactory();
-
-        $this->registerPayload();
-
-        $this->registerManager();
-
-        $this->registerJWTAuth();
     }
 }

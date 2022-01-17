@@ -175,7 +175,7 @@ class Lcobucci extends Provider
      * @return array|string
      * @throws \ReflectionException
      */
-    protected function getSigningKey(): array|string
+    protected function getSigningKey()
     {
         return $this->isAsymmetric() ? [$this->getPrivateKey(), $this->getPassword()] : $this->getSecret();
     }
