@@ -17,10 +17,7 @@
     "autoload": {
         "psr-4": {
             "catchAdmin\\jwt\\": "src"
-        },
-        "files": [
-            "src/helper.php"
-        ]
+        }
     },
     "extra": {
         "think": {

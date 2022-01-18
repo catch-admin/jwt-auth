@@ -24,7 +24,7 @@ class JWT
     /**
      * @var mixed
      */
-    protected mixed $token = null;
+    protected $token = null;
 
     /**
      * @param Manager $manager
